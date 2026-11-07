@@ -30,21 +30,23 @@ jobs:
 
       - name: Check Flutter project
         run: |
-          if [ ! -f pubspec.yaml ]; then
-            echo "pubspec.yaml not found"
+          test -f app/pubspec.yaml || {
+            echo "Flutter project not found in app/"
             exit 1
-          fi
+          }
 
       - name: Install dependencies
+        working-directory: app
         run: flutter pub get
 
       - name: Build APK
+        working-directory: app
         run: flutter build apk --release --split-per-abi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Dhruva-AI-APKs
-          path: build/app/outputs/flutter-apk/*.apk
+          path: app/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
           retention-days: 7
