@@ -1,17 +1,17 @@
+
 /// Builds `ThemeData` for both modes straight from `design-tokens.json`
 /// (mirrored in design_tokens.dart — see that file's header for the
 /// drift-proofing contract). Dark is the hero/default per ADR-003.
 ///
 /// Mapping notes for anyone diffing this against the JSON:
 /// - JSON `background`/`onBackground` have no live slot in Flutter's
-///   `ColorScheme` (deprecated in favor of `surface`/`onSurface` since
+///   ColorScheme (deprecated in favor of `surface`/`onSurface` since
 ///   3.18). `onBackground` equals `onSurface` byte-for-byte in the JSON, so
 ///   nothing is lost; `background` becomes `scaffoldBackgroundColor`
 ///   explicitly, keeping the JSON's screen-backdrop/component-surface
 ///   distinction intact without touching a deprecated constructor param.
 /// - JSON `surfaceVariant` maps to `ColorScheme.surfaceContainerHighest`,
-///   the non-deprecated M3 replacement slot for that role (the old
-///   `surfaceVariant` param is deprecated in favor of it).
+///   the non-deprecated M3 replacement slot for that role.
 /// - `success`/`warning` have no `ColorScheme` slot at all — they live on
 ///   the `DhruvaTokens` theme extension instead.
 library;
@@ -23,10 +23,6 @@ import 'design_tokens.dart';
 import 'dhruva_theme_extension.dart';
 import 'page_transitions.dart';
 
-/// System bar style driven by the theme, so the clock/battery stay readable on
-/// every screen in both modes. `statusBarBrightness` is the iOS half (the
-/// brightness of the app's own content under the bar), `statusBarIconBrightness`
-/// the Android half (the icons themselves, so inverted).
 SystemUiOverlayStyle overlayStyleFor(Brightness theme) {
   final dark = theme == Brightness.dark;
   return SystemUiOverlayStyle(
@@ -84,15 +80,16 @@ abstract final class AppTheme {
       fontFamilyFallback: const [tokenUiDevanagariFamily],
       textTheme: textTheme,
       primaryTextTheme: textTheme,
-      // InkRipple, not the long decorative sparkle: this runs on every tap.
       splashFactory: InkRipple.splashFactory,
+
+      // Android uses Dhruva's custom page transition.
+      // Other platforms use Flutter's default transitions.
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: DhruvaPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
         },
       ),
+
       appBarTheme: AppBarTheme(
         backgroundColor: c.background,
         foregroundColor: c.onBackground,
@@ -101,10 +98,9 @@ abstract final class AppTheme {
         scrolledUnderElevation: tokenElevation[1].dp,
         titleTextStyle: textTheme.titleLarge,
         systemOverlayStyle: overlayStyleFor(brightness),
-        // Left-aligned on every platform: iOS centred some bars (Library) and
-        // left-aligned others (Today, Ask).
         centerTitle: false,
       ),
+
       cardTheme: CardThemeData(
         elevation: tokenElevation[1].dp,
         color: c.surface,
@@ -113,11 +109,13 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(radius.lg),
         ),
       ),
+
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius.full),
         ),
       ),
+
       dialogTheme: DialogThemeData(
         backgroundColor: c.surface,
         surfaceTintColor: c.surfaceTint,
@@ -125,13 +123,17 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(radius.xl),
         ),
       ),
+
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: c.surface,
         surfaceTintColor: c.surfaceTint,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(radius.xl)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(radius.xl),
+          ),
         ),
       ),
+
       snackBarTheme: SnackBarThemeData(
         backgroundColor: c.inverseSurface,
         contentTextStyle: textTheme.bodyMedium?.copyWith(
@@ -142,6 +144,7 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(radius.sm),
         ),
       ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: c.surfaceVariant,
@@ -150,6 +153,7 @@ abstract final class AppTheme {
           borderSide: BorderSide.none,
         ),
       ),
+
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -157,6 +161,7 @@ abstract final class AppTheme {
           ),
         ),
       ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: c.outline),
@@ -165,6 +170,7 @@ abstract final class AppTheme {
           ),
         ),
       ),
+
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -172,12 +178,7 @@ abstract final class AppTheme {
           ),
         ),
       ),
-      // Rule 6 (Android, Material 3 Expressive): pill/stadium shapes come from
-      // the radius token `full`, never per-widget magic numbers. The nav
-      // indicator, chips, buttons (above), segmented control and FABs all
-      // share it. iOS chrome (translucent bars) lives in
-      // `core/widgets/platform_chrome.dart`, which branches on
-      // `Theme.of(context).platform`.
+
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
@@ -202,6 +203,7 @@ abstract final class AppTheme {
           ),
         ),
       ),
+
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: SegmentedButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -209,42 +211,48 @@ abstract final class AppTheme {
           ),
         ),
       ),
+
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         shape: const StadiumBorder(),
         extendedPadding: EdgeInsetsDirectional.symmetric(
           horizontal: const TokenSpacingScale().lg,
         ),
       ),
-      dividerTheme: DividerThemeData(color: c.outlineVariant, thickness: 1),
+
+      dividerTheme: DividerThemeData(
+        color: c.outlineVariant,
+        thickness: 1,
+      ),
+
       extensions: [DhruvaTokens.fromColors(c)],
     );
   }
 
   static TextTheme _buildTextTheme(Color color) => TextTheme(
-    displayLarge: _style(tokenDisplayLarge, color),
-    displayMedium: _style(tokenDisplayMedium, color),
-    displaySmall: _style(tokenDisplaySmall, color),
-    headlineLarge: _style(tokenHeadlineLarge, color),
-    headlineMedium: _style(tokenHeadlineMedium, color),
-    headlineSmall: _style(tokenHeadlineSmall, color),
-    titleLarge: _style(tokenTitleLarge, color),
-    titleMedium: _style(tokenTitleMedium, color),
-    titleSmall: _style(tokenTitleSmall, color),
-    bodyLarge: _style(tokenBodyLarge, color),
-    bodyMedium: _style(tokenBodyMedium, color),
-    bodySmall: _style(tokenBodySmall, color),
-    labelLarge: _style(tokenLabelLarge, color),
-    labelMedium: _style(tokenLabelMedium, color),
-    labelSmall: _style(tokenLabelSmall, color),
-  );
+        displayLarge: _style(tokenDisplayLarge, color),
+        displayMedium: _style(tokenDisplayMedium, color),
+        displaySmall: _style(tokenDisplaySmall, color),
+        headlineLarge: _style(tokenHeadlineLarge, color),
+        headlineMedium: _style(tokenHeadlineMedium, color),
+        headlineSmall: _style(tokenHeadlineSmall, color),
+        titleLarge: _style(tokenTitleLarge, color),
+        titleMedium: _style(tokenTitleMedium, color),
+        titleSmall: _style(tokenTitleSmall, color),
+        bodyLarge: _style(tokenBodyLarge, color),
+        bodyMedium: _style(tokenBodyMedium, color),
+        bodySmall: _style(tokenBodySmall, color),
+        labelLarge: _style(tokenLabelLarge, color),
+        labelMedium: _style(tokenLabelMedium, color),
+        labelSmall: _style(tokenLabelSmall, color),
+      );
 
   static TextStyle _style(TokenTextRole role, Color color) => TextStyle(
-    fontFamily: role.family,
-    fontFamilyFallback: [role.devanagariFallback],
-    fontWeight: role.weight,
-    fontSize: role.size,
-    height: role.heightMultiplier,
-    letterSpacing: role.letterSpacing,
-    color: color,
-  );
+        fontFamily: role.family,
+        fontFamilyFallback: [role.devanagariFallback],
+        fontWeight: role.weight,
+        fontSize: role.size,
+        height: role.heightMultiplier,
+        letterSpacing: role.letterSpacing,
+        color: color,
+      );
 }
