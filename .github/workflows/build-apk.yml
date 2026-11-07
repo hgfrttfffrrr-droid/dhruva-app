@@ -28,25 +28,18 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Check Flutter project
-        run: |
-          test -f app/pubspec.yaml || {
-            echo "Flutter project not found in app/"
-            exit 1
-          }
-
       - name: Install dependencies
         working-directory: app
         run: flutter pub get
 
       - name: Build APK
         working-directory: app
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Dhruva-AI-APKs
+          name: Dhruva-AI-APK
           path: app/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
           retention-days: 7
